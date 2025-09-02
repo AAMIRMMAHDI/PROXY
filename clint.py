@@ -4,7 +4,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
 
 # تنظیم آدرس سرور پروکسی (HTTP)
-PROXY_SERVER = "https://proxy-1-a0kx.onrender.com/proxy?url="
+PROXY_SERVER = "https://ytjkyu.pythonanywhere.com//proxy?url="
 
 class Browser(QMainWindow):
     def __init__(self):
