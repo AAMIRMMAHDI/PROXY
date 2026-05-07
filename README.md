@@ -1,74 +1,60 @@
-# MHR-CFW Windows Client – Corporate Edition
+# 🛡️ MHR‑CFW Windows Client – Corporate Edition
 
-> **Embedded CA + Auto Install**  
-> A Windows client/proxy tool with built-in certificate management for secure interception and corporate network workflows.
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Platform Windows](https://img.shields.io/badge/platform-Windows-0078D6.svg)](https://www.microsoft.com/windows)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
 
----
+**Enterprise‑grade secure proxy client with automatic CA installation, MITM engine, domain fronting, and system‑wide traffic routing.**
 
-<div align="center">
-
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Platform](https://img.shields.io/badge/platform-Windows-0078D6)
-![Language](https://img.shields.io/badge/language-Python-3776AB)
-![License](https://img.shields.io/badge/license-Internal%20Use%20Only-orange)
-
-</div>
+> **Administrator rights required** – the client automatically elevates and hides the console window.
 
 ---
 
-## ✨ Overview
+## 📋 Overview
 
-**MHR-CFW Windows Client – Corporate Edition** is a Windows-oriented proxy and certificate management utility designed for controlled enterprise environments.
+MHR‑CFW is a powerful Windows proxy solution designed for corporate environments. It establishes a **secure tunnel** through Google infrastructure using **domain fronting** and **HTTP/2 multiplexing**, making it highly resilient against deep packet inspection. The client:
 
-It includes:
-
-- An **embedded CA certificate and private key**
-- **Automatic CA installation** into the Windows Trusted Root store when running with admin privileges
-- A **full proxy engine** supporting:
-  - HTTP
-  - SOCKS5
-  - MITM inspection
-  - Domain fronting
-
-The project appears to be built for environments where secure interception, traffic routing, and corporate trust management are required.
+- ✅ Embeds its own Certificate Authority (CA) – no external files  
+- ✅ Automatically installs the CA into Windows Trusted Root (when admin)  
+- ✅ Configures system proxy **on start** and disables it **on exit**  
+- ✅ Supports **HTTP/1.1** and **HTTP/2** (with automatic fallback)  
+- ✅ Provides **SOCKS5** and **HTTP** proxy interfaces locally  
+- ✅ Caches static assets for performance  
+- ✅ Includes a modern **Qt GUI** with license validation and logging
 
 ---
 
-## 🧩 Key Features
+## ✨ Features
 
-<div align="grid">
-
-### 📜 Embedded Certificate Authority
-The application ships with an embedded CA certificate and private key for trusted interception workflows.
-
-### ⚙️ Auto Install on Windows
-When launched as administrator, the client can automatically install the CA certificate into the Windows Trusted Root store.
-
-### 🛡️ MITM Certificate Management
-A dedicated certificate manager handles MITM-related certificate logic and trust provisioning.
-
-### 🌐 Proxy Support
-Supports multiple proxy modes and advanced routing behavior, including:
-- HTTP proxying
-- SOCKS5 proxying
-- MITM interception
-- Domain fronting
-
-</div>
+| Category            | Capabilities                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| **Proxy Protocols** | HTTP/HTTPS (with MITM), SOCKS5 (RFC 1928)                                                      |
+| **Transport**       | Domain fronting via Google IPs, SNI rotation, HTTP/2 multiplexing (H2), TLS 1.2+                |
+| **Security**        | On‑the‑fly certificate generation, embedded CA, automatic CA trust installation               |
+| **System**          | Auto‑set Windows proxy (HKCU), auto‑elevation, hidden console, graceful shutdown               |
+| **Performance**     | Connection pooling, response caching (static assets), request batching, parallel fan‑out       |
+| **Compression**     | Supports gzip, deflate, brotli, zstd decompression                                             |
+| **User Interface**  | Corporate‑style dark/light log console, license history, one‑click start/stop                  |
 
 ---
 
-## 🏗️ Project Structure
-```text
-mhr-cfw-windows-client/
-├── main.py
-├── README.md
-├── certs/
-│   ├── embedded_ca.crt
-│   └── embedded_ca.key
-├── src/
-│   ├── proxy/
-│   ├── mitm/
-│   └── utils/
-└── assets/
-└── screenshots/
+## 🖥️ Installation
+
+### 1. Prerequisites
+
+- **Windows** 10 / 11 (64‑bit recommended)  
+- **Python 3.7** or higher installed ([python.org](https://python.org))  
+- Administrator privileges (first run will auto‑elevate)
+
+### 2. Install Dependencies
+
+Create a `requirements.txt` with the following content:
+
+```txt
+PySide6>=6.4.0
+cryptography>=39.0.0
+h2>=4.1.0
+aiohttp>=3.8.0
+brotli>=1.0.9
+zstandard>=0.21.0
+certifi>=2023.0.0
