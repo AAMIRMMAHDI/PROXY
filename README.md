@@ -1,134 +1,151 @@
-markdown
-# MHR‑CFW Windows Client – Corporate Edition
+# MHR‑CFW Secure Proxy (Corporate Edition)
 
-Secure, high‑performance HTTPS proxy with MITM, domain fronting, and automatic Windows system proxy integration.  
-Designed for enterprise environments where all outbound traffic must be inspected or rerouted through a controlled relay.
+**MHR‑CFW** is a high‑performance Windows proxy client that uses **domain fronting** to route your internet traffic through Google’s infrastructure, bypassing censorship and network restrictions while maintaining full transparency and speed.  
+It automatically configures your system’s proxy settings and, when running with administrator privileges, installs its own certificate authority to seamlessly handle HTTPS connections.
 
-## ✨ Features
+> ⚠️ **Important** – This documentation describes the **compiled application**.  
+> Source code is **not included** in this package.  
+> For installation files, see the `APP/Windows` and `APP/Android` folders.
 
-- **All‑in‑one embedded CA** – No external certificate files; the CA is hardcoded and automatically installed into the Windows Trusted Root store when running as administrator.
-- **Powerful proxy engine** – HTTP/HTTPS and SOCKS5 support, full MITM for TLS traffic, domain fronting, connection pooling, and HTTP/2 multiplexing.
-- **Smart routing** – Automatically bypasses Google IP ranges unless blocked, uses direct connections when possible, and falls back to the relay only when required.
-- **Low‑latency caching** – Static assets (CSS, JS, images, fonts) are cached with intelligent TTL parsing to reduce relay load.
-- **Windows system proxy** – Automatically sets the system‑wide proxy on start and clears it on exit (requires admin rights).
-- **User‑friendly GUI** – Built with PySide6, featuring a clean corporate design, license validation, history storage, and a real‑time log console.
-- **License management** – Licenses are validated online, and used codes are stored locally for quick reconnection.
-- **No console window** – Runs silently in the background; logs are visible inside the GUI only (no extra terminal).
+---
 
-## 📋 System Requirements
+## Features
 
-- **Operating System** – Windows 10 / Windows 11 (x64)
-- **Python** – 3.9 or higher (3.11+ recommended)
-- **Privileges** – Administrator rights are **required** for automatic CA installation and system proxy configuration.  
-  Without admin, the proxy will still work but you must install the CA and configure your browser manually.
+- **One‑click proxy** – Enter a license key, hit *Connect*, and the proxy is up in seconds.
+- **Automatic Windows proxy configuration** – Sets the system proxy (HTTP & SOCKS5) on start and restores original settings on exit (requires admin).
+- **Built‑in CA for HTTPS** – An embedded certificate authority can be automatically installed into Windows’ Trusted Root store so that all HTTPS traffic is inspected and relayed without browser warnings.
+- **Domain fronting via Google Apps Script** – Requests are disguised as legitimate Google traffic (SNI = `www.google.com`, Host = `script.google.com`), making them extremely difficult to block.
+- **High‑performance relay engine**
+  - HTTP/2 multiplexing and connection pooling
+  - Intelligent caching of static assets
+  - Request batching and parallel fan‑out for reliability
+  - Multiple rotating Google IPs and SNI names to avoid detection
+- **Smart routing** – Direct connections to Google services when possible, with automatic fallback to the relay if direct connections are blocked.
+- **Modern, lightweight GUI** – Built with Qt, includes a real‑time log viewer and license history.
+- **License‑based activation** – Configuration is provisioned automatically from the license server; no manual setup required.
 
-## 🚀 Installation
+---
 
-1. **Clone or download** this repository.
+## Requirements
 
-2. **Install dependencies** using pip:
-   ```bash
-   pip install -r requirements.txt
-Required packages:
+- **Operating System** – Windows 10 (version 1809 or later) / Windows 11 (64‑bit)
+- **Administrator privileges** – Required for automatic proxy setup and CA installation (the application will still run without admin, but those features will be disabled)
+- **Internet connection** – Outbound access to `script.google.com` and the configured Google IPs (TCP port 443)
 
-PySide6 – GUI framework
+---
 
-cryptography – Certificate generation
+## Installation
 
-aiohttp – License validation (async HTTP)
+1. Download the installer from the **`APP/Windows`** folder.
+2. Run the installer and follow the on‑screen instructions.
+3. Launch **MHR‑CFW** from the Start menu or desktop shortcut.
+4. **If you intend to use automatic proxy setup, right‑click and select *Run as administrator*.**
 
-h2, hyperframe, hpack – HTTP/2 support
+---
 
-brotli, zstandard – Advanced compression (optional but recommended)
+## Usage
 
-certifi – SSL certificate bundle
+1. **Enter your license code** in the *License Code* field.  
+   (Previous codes are saved and can be re‑selected from the history list.)
 
-Run the application (as administrator for full functionality):
+2. Click **Connect & Start Proxy**.
+   - The proxy will start listening on `127.0.0.1:8085` (HTTP) and, if enabled, `127.0.0.1:1080` (SOCKS5).
+   - If the application is running with administrator rights, Windows’ system proxy will be automatically configured to use these ports.
 
-bash
-python MHR_CFW.py
-If not launched as admin, you will receive a warning. You can still use the proxy by manually configuring your browser (see below).
+3. Your browser and other applications that respect the system proxy will now route traffic through MHR‑CFW.
 
-🖱️ Usage
-Start the GUI – The main window appears with two sections:
+4. To stop the proxy, click **Stop Proxy**.  
+   The system proxy will be disabled, and the original network settings will be restored.
 
-License & Control: Enter your license code and click Connect & Start Proxy.
+5. The **Connection Log** panel shows real‑time activity, errors, and performance metrics.
 
-License History: Previously used codes are saved for quick reuse.
+> **Note** – All proxy settings (ports, encryption, routing rules, etc.) are **provisioned by your license server**.  
+> There are no configuration files to edit.
 
-First run (admin only) – If running as administrator, the CA certificate is automatically installed into the Windows Trusted Root store, and the system proxy is enabled.
-Your entire system traffic (HTTP/HTTPS/SOCKS5) will be routed through the proxy at 127.0.0.1:8085 (HTTP) and 127.0.0.1:1080 (SOCKS5).
+---
 
-Manual configuration (non‑admin) – If you cannot or do not want to run as administrator:
+## How It Works (Technical Overview)
 
-Install ca/mhr-cfw.crt (extracted from the embedded certificate) into your browser’s certificate store.
+MHR‑CFW acts as a **local forward proxy** and a **man‑in‑the‑middle (MITM) proxy** for HTTPS.
 
-Configure your browser (or OS proxy settings) to use 127.0.0.1:8085 as an HTTP/HTTPS proxy.
+1. **HTTP Requests**  
+   The client sends a plain HTTP request to the proxy.  
+   The proxy rewrites the request and sends it to a **Google Apps Script** endpoint using a TLS connection with the SNI set to a harmless Google domain (e.g., `www.google.com`).  
+   The Apps Script fetches the actual resource and returns it – this is **domain fronting**.
 
-Stop the proxy – Click Stop Proxy. The system proxy will be disabled immediately.
+2. **HTTPS Requests (MITM)**  
+   - When a browser wants to connect to an HTTPS site, the proxy intercepts the `CONNECT` request.
+   - It generates a **certificate for the target domain** on‑the‑fly, signed by the embedded CA.
+   - The browser’s TLS session is terminated at the proxy; the proxy decrypts the traffic.
+   - The decrypted HTTP request is then forwarded through the Google Apps Script relay (just like a plain HTTP request).
+   - The response is re‑encrypted with the generated certificate and sent back to the browser.
+   - **This works seamlessly once the embedded CA is trusted by Windows.** The installer can add the CA to the Trusted Root store when run as administrator.
 
-Note: The proxy engine continues to run even after closing the GUI? No – closing the main window stops the proxy engine and disables the system proxy.
+3. **Performance Optimizations**  
+   - **Caching** – Static files (CSS, JS, images, etc.) are cached locally to reduce latency and server load.
+   - **Connection Pooling & Multiplexing** – TLS connections to Google are reused; HTTP/2 allows multiple streams over a single connection.
+   - **Batching** – Multiple small requests can be combined into a single call to the Apps Script.
+   - **Smart Routing** – Direct connections to Google services are attempted first; if they fail (censored), the relay is used.
 
-⚙️ Configuration
-All configuration parameters are supplied by the license server upon successful validation.
-The client does not have a local configuration file; everything is received from http://185.208.175.180:5055/api/validate.
+4. **Bypass & Block Lists**  
+   The proxy can be instructed (via the license server) to bypass certain hosts (connect directly) or completely block others.
 
-Typical server‑provided settings include:
+---
 
-listen_host – IP address the proxy listens on (default: 127.0.0.1)
+## Technology Stack (Inside the Application)
 
-listen_port – HTTP proxy port (default: 8085)
+The compiled client uses these components internally:
 
-socks5_port – SOCKS5 port (default: 1080)
+- **Google Apps Script** – Relay endpoint  
+- **Multiple Google IPs & SNI domains** – For fronting and rotation  
+- **HTTP/2** – Multiplexed connections (`h2` library)  
+- **TLS / SSL** – `cryptography`, `ssl` module  
+- **Response compression** – gzip, deflate, brotli, zstandard  
+- **Windows Registry** – Automatic proxy configuration  
+- **Qt / PySide6** – Graphical user interface  
+- **SQLite** – Local license history
 
-google_ip – IP address used for Google domain fronting (default: 216.239.38.120)
+---
 
-front_domain – SNI name for domain fronting (default: www.google.com)
+## Security & Privacy Considerations
 
-relay_timeout – Timeout for relay requests (seconds)
+- The **embedded CA** allows the proxy to decrypt your HTTPS traffic.  
+  The CA certificate is provided by the software vendor; you should trust the vendor before using this feature.  
+  You can choose to **not run as administrator** – then the CA will not be installed, and HTTPS sites will show certificate warnings (or the proxy may not work properly).
 
-parallel_relay – Number of parallel script‑ID channels for failover
+- All traffic passes through the **Google Apps Script relay** owned by your license provider.  
+  The relay operator can see the full content of your requests and responses (after the proxy’s MITM decryption).  
+  **Use MHR‑CFW only with a license provider you trust.**
 
-Advanced users can modify the embedded default settings directly in the DomainFronter and ProxyServer classes, but this is not recommended.
+- The client **does not** log your browsing activity locally beyond the on‑screen log (which is cleared when you close the application).
 
-🧰 Troubleshooting
-Symptom	Likely cause	Solution
-certutil error during CA installation	Not running as administrator	Restart the application as Administrator.
-System proxy not changed	Not admin or registry permissions	Run as admin, or set proxy manually in Windows Settings.
-License validation fails	Server unreachable or invalid code	Check your network connection; verify the license code.
-TLS handshake errors in logs	CA not trusted	Install the CA certificate manually (extract from embedded or use certutil).
-h2 related errors	Missing HTTP/2 library	Install h2, hyperframe, hpack.
-GUI freezes on start	Missing Qt platform plugin	Ensure PySide6 is installed correctly, or run python -m pip install --force-reinstall PySide6.
-🔧 Manual CA installation (if auto‑install fails)
-The embedded CA certificate is printed in the source code. You can save it to a file (mhr-cfw.crt) and install it:
+---
 
-cmd
-certutil -addstore Root mhr-cfw.crt
-Or import it via the Graphical Certificate Manager (certlm.msc or certmgr.msc).
+## Troubleshooting
 
-🗂️ File Structure
-text
-.
-├── MHR_CFW.py            # Main application source
-├── requirements.txt      # Python dependencies
-└── README.md             # This file
-⚖️ License & Disclaimer
-This software is provided for authorised corporate use only.
-The embedded certificate and private key are hardcoded and must not be redistributed without permission.
-Use of this software may be subject to local laws regarding traffic interception.
-The author assumes no liability for misuse.
+| Problem | Solution |
+|---------|----------|
+| “Not running as admin” warning | Right‑click the shortcut → **Run as administrator** to enable proxy auto‑configuration. |
+| Certificate errors in browser | The CA was not installed. Launch the program as administrator once, or install the CA manually (contact support for the certificate file). |
+| Slow or no internet | Check your firewall – outbound TCP 443 to Google IPs must be allowed. Verify your license is still valid. |
+| Proxy fails to start | Ensure no other application is using ports 8085 or 1080. Check the log for errors. |
 
-🛠️ Building a Standalone Executable
-You can package the application into a single .exe using PyInstaller:
+---
 
-bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name MHR-CFW --icon TASK.png MHR_CFW.py
-The --windowed flag prevents a console window from appearing.
+## License
 
-📬 Support
-For technical issues, please contact your system administrator or open an issue in the internal repository.
-External support is not provided for this corporate edition.
+This software is **proprietary** and distributed under a license‑based activation model.  
+Redistribution, reverse engineering, or modification is strictly prohibited unless authorised in writing.
 
-Version: 1.0 – Corporate Edition
-Last updated: 2026-05-13
+---
+
+## Disclaimer
+
+MHR‑CFW is designed for **legitimate privacy and censorship circumvention** in regions where access to information is restricted.  
+The developers assume no liability for any misuse or illegal activities conducted using this software.
+
+**Always comply with your local laws and the terms of service of the networks and services you use.**
+
+---
+
+*For support or to obtain a license, contact your authorised reseller.*
